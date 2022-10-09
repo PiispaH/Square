@@ -33,9 +33,10 @@ class Card:
 class CardPile:
 
     # Each pile starts with only one card
-    def __init__(self, starting_card: Card):
+    def __init__(self, starting_card: Card, position: tuple):
         self.height = 1
         self.cards = [starting_card]
+        self.position = position
 
     def __repr__(self):
         return f"On top: {self.cards[-1]}, height: {self.height}"
@@ -70,6 +71,8 @@ class CardPile:
     def get_height(self):
         return self.height
 
+    def get_position(self):
+        return self.position
 
 # Defines the table that the game is played on.
 class Table:
@@ -95,27 +98,33 @@ class Table:
         self.cards_in_deck = cards[self.size:]
 
         # Creates the card piles for the starts
-        for card in start_cards:
-            self.card_piles.append(CardPile(card))
+        for index, card in enumerate(start_cards):
+            self.card_piles.append(CardPile(card, (index, 0)))
+            print(index, card)
 
     # Places the next card in the deck onto the specified pile on the table.
     # The value of parameter guess is either -1, 0 or 1. They mean lower-, same and -higher value than
     # the current top card on the pile.
     def place_on_pile(self, pile: int, guess: int):
-        card_to_place = self.cards_in_deck.pop(0)
-        result = self.card_piles[pile].add_to_top(card_to_place)
+        if len(self.cards_in_deck) != 0:
+            card_to_place = self.cards_in_deck.pop(0)
+            result = self.card_piles[pile].add_to_top(card_to_place)
 
-        # Returns whether the guess was right or not
-        if guess == result:
-            print("correct\n")
+            # Returns whether the guess was right or not
+            if guess == result:
+                print("correct\n")
+            else:
+                print("Wrong\n")
+            return True
+
         else:
-            print("Wrong\n")
+            return False
 
     def print_table(self):
         print(f"1  2  3")
-        print(f"{self.card_piles[0].show_top_card()}  {self.card_piles[1].show_top_card()}  {self.card_piles[2].show_top_card()}")
-        print(f"{self.card_piles[3].show_top_card()}  {self.card_piles[4].show_top_card()}  {self.card_piles[5].show_top_card()}")
-        print(f"{self.card_piles[6].show_top_card()}  {self.card_piles[7].show_top_card()}  {self.card_piles[8].show_top_card()}\n")
+        print(f"{self.card_piles[0].show_top_card()}, h:{self.card_piles[0].get_height()}  {self.card_piles[1].show_top_card()}, h:{self.card_piles[1].get_height()}  {self.card_piles[2].show_top_card()}, h:{self.card_piles[2].get_height()}")
+        print(f"{self.card_piles[3].show_top_card()}, h:{self.card_piles[3].get_height()}  {self.card_piles[4].show_top_card()}, h:{self.card_piles[4].get_height()}  {self.card_piles[5].show_top_card()}, h:{self.card_piles[5].get_height()}")
+        print(f"{self.card_piles[6].show_top_card()}, h:{self.card_piles[6].get_height()}  {self.card_piles[7].show_top_card()}, h:{self.card_piles[7].get_height()}  {self.card_piles[8].show_top_card()}, h:{self.card_piles[8].get_height()}\n")
 
     def set_next_stage(self, num_of_piles: int):
         self.stage += 1
@@ -136,7 +145,12 @@ class Dealer(Table):
         return self.size
 
     def guess(self, pile: int, guess: int):
-        self.table.place_on_pile(pile, guess)
+        cards_left = self.table.place_on_pile(pile, guess)
+        if not cards_left:
+            print("The card pile is empty")
+            return True
+
+        return False
 
     def whose_turn(self):
         i = 0
@@ -153,14 +167,27 @@ def main():
     player = game.whose_turn()
 
     while True:
-
-
+        size = game.get_size()
         print(next(player))
         game.table.print_table()
-        pile = int(input(f"Which pile (0-{game.get_size()}): "))
 
-        guess = int(input("Greater: 1, same: 0, smaller: -1. Guess: "))
-        game.guess(pile, guess)
+        while True:
+            pile = int(input(f"Which pile (0-{size}): "))
+            if 0 <= pile <= size:
+                break
+            else:
+                print("Incorrect input")
+
+        while True:
+            guess = int(input("Greater: 1, same: 0, smaller: -1. Guess: "))
+            if guess in [-1, 0, 1]:
+                break
+            else:
+                print("Incorrect input")
+
+        out_of_cards = game.guess(pile, guess)
+        if out_of_cards:
+            break
 
 
 
